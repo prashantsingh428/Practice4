@@ -5,9 +5,9 @@ import cookieParser from 'cookie-parser';
 const app = express();
 
 // Enable CORS for all origins
-app.use(cors({
-    origin: process.env.CORS_ORIGIN ,
-    credentials: true
+app.use(cors({    //Enables CORS middleware
+    origin: process.env.CORS_ORIGIN ,   //This sets which frontend URL is allowed to access your backend.
+    credentials: true   //	Allows cookies or auth tokens to be shared
 }));
 
 app.use(express.json({limmit: '1mb'}));
