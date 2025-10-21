@@ -1,26 +1,31 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import userRouter from './routes/user.routes.js'; // ✅ extension added
+
 
 const app = express();
 
-// Enable CORS for all origins
-app.use(cors({    //Enables CORS middleware
-    origin: process.env.CORS_ORIGIN ,   //This sets which frontend URL is allowed to access your backend.
-    credentials: true   //	Allows cookies or auth tokens to be shared
+// // ✅ Enable CORS
+// app.use(cors({    
+//     origin: process.env.CORS_ORIGIN,   
+//     credentials: true  
+// }));
+
+app.use(cors({
+  origin: "*",
+  credentials: true,
 }));
 
-app.use(express.json({limmit: '1mb'}));
+
+// ✅ Middlewares
+app.use(express.json({ limit: '1mb' })); // fixed "limmit"
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(cookieParser());
 
+// ✅ Routes
+app.use("/api/v1/users", userRouter);
 
-export {app} ;
-
-// | Middleware             | Purpose                         | Example Use                |
-// | ---------------------- | ------------------------------- | -------------------------- |
-// | `express.json()`       | Parse JSON data in request body | API requests from frontend |
-// | `express.urlencoded()` | Parse form data                 | HTML forms                 |
-// | `express.static()`     | Serve static files              | Images, CSS, JS, uploads   |
-// | `cookieParser()`       | Read cookies from requests      | Authentication, sessions   |
+// Example: http://localhost:5000/api/v1/users
+export { app };

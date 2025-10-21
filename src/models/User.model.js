@@ -1,102 +1,102 @@
-import mongoose from 'mongoose';
- 
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
 const userSchema = new mongoose.Schema(
-    {
-        username :{
-            type:Sring,
-            required:true,
-            unique:true,
-            lowercase:true,
-            trim:true,
-            index:true
-        },
-
-        email :{
-            type:Sring,
-            required:true,
-            unique:true,
-            lowercase:true,
-            trim:true,
-        },
-
-        fullName :{
-            type:Sring,
-            required:true,
-            trim:true,
-            index:true
-        },
-
-        avatar :{
-            type:Sring, //cloudinary
-            required:true,
-        },
-
-        coverImage :{
-            type:Sring,
-        },
-
-        watchHistory :[
-            {
-                type: Schema.Types.ObjectId,
-                ref: "video"
-            }
-        ],
-
-        password: {
-            type: String,
-            required: [true,"Password is required"]
-        },
-
-        refreshToken:{
-            type:String, 
-        },
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
-    {
-        timestamps: true
-    }
-)
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
 
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
 
-//This code automatically hashes the user’s 
-// password before saving it to MongoDB.
+    avatar: {
+      type: String, // Cloudinary URL
+      required: true,
+    },
 
+    coverImage: {
+      type: String,
+    },
+
+    watchHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
+
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+
+    refreshToken: {
+      type: String,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// 🔐 Hash password before saving
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
-    this.password = bcrypt.hashSync(this.password, 10)  //The number 10 is the salt rounds —  higher number = stronger encryption (but slower).
-    next()
-})
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
 
+// 🧠 Method to compare passwords
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
 
-//🔐Second Part: Method for Password Checking
-userSchema.methods.isPasswordCorrect = async function(password) {
-   return await bcrypt.compare(password, this.password)
-}
+// ⚙️ Generate Access Token
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+    }
+  );
+};
 
-userSchema.methods.generateAccessToken = function() {
-    return jwt.sign(
-       {
-        _id: this._id,
-        email: this.email,
-        username: this.username,
-        fullName: this.fullName
-       },
-       process.env.ACCESS_TOKEN_SECRET,
-       {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-       }
-    )
-}
-userSchema.methods.generateRefreshToken = function() {
-    return jwt.sign(
-        {
-         _id: this._id,
-         
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-         expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        }
-     )
-}
-export const User = mongoose.model('User', userSchema);
+// ♻️ Generate Refresh Token
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    }
+  );
+};
+
+export const User = mongoose.model("User", userSchema);
